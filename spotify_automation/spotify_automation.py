@@ -1,13 +1,13 @@
 import json
 import logging
 import os
-import sys
 
 import spotipy
 from spotipy import SpotifyOAuth, Spotify
 
 logging.getLogger().setLevel('INFO')
 USERNAME = os.environ.get('USERNAME')
+CACHE_DIR = os.environ.get('spotify_cache')
 MAX_PLAYLIST_TRACKS = 11000
 
 
@@ -55,7 +55,7 @@ def get_all_playlists(session: Spotify) -> list:
     return all_playlists
 
 
-def get_playlist_tracks(session, playlist_id):
+def get_playlist_tracks(session: Spotify, playlist_id: str) -> list:
     """
     Get the list of tracks in a playlist
     The most tracks you can query at once is 100 so you must iterate and use an offset
@@ -67,11 +67,41 @@ def get_playlist_tracks(session, playlist_id):
     tracks_in_playlist = []
     for track_offset in range(0, MAX_PLAYLIST_TRACKS, 100):
 
-        results = session.user_playlist_tracks(USERNAME, playlist_id,
-                                               limit=100, offset=track_offset)
+        results = session.playlist_tracks(USERNAME, playlist_id, limit=100, offset=track_offset)
         if len(results['items']) < 1:
             break
 
         [tracks_in_playlist.append(item['track']) for item in results['items']]
 
     return tracks_in_playlist
+
+
+def load_tracks_file(playlist_name: str) -> list:
+    """
+    Load the tracks from a local cache json file
+
+    :param playlist_name:       Name of the playlist to load the tracks from
+    :return:                    List of track dictionaries
+    """
+    file_name = os.path.join(CACHE_DIR, playlist_name + '.json')
+    logging.info('Loading playlists tracks from file: "{}"'.format(file_name))
+    try:
+        with open(file_name, 'r') as file_handle:
+            return json.loads(file_handle.read())
+    except FileNotFoundError:
+        return []
+
+
+def save_tracks_file(playlist_name, playlist_tracks) -> None:
+    """
+    Write a list of playlist tracks to a json file
+
+    :param playlist_name: Name of playlist to save
+    :param playlist_tracks: List of track dictionaries
+    """
+    file_name = os.path.join(CACHE_DIR, playlist_name + '.json')
+    logging.info('Saving playlists tracks to file: "{}"'.format(file_name))
+    with open(file_name, 'w') as file_handle:
+        file_handle.write(json.dumps(playlist_tracks, indent=4, default=str))
+
+    logging.info(f'Saved {len(playlist_tracks)} tracks to {file_name}')
