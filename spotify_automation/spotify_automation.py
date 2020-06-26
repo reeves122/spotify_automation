@@ -8,6 +8,7 @@ from spotipy import SpotifyOAuth, Spotify
 
 logging.getLogger().setLevel('INFO')
 USERNAME = os.environ.get('USERNAME')
+MAX_PLAYLIST_TRACKS = 11000
 
 
 def login() -> Spotify:
@@ -37,7 +38,7 @@ def get_all_playlists(session: Spotify) -> list:
     Call Spotify API to get a list of playlists for the user
 
     :param session:     Spotipy session
-    :return: List of dictionaries, each is a playlist
+    :return:            List of dictionaries, each is a playlist
     """
     logging.info("Retrieving list of playlists from Spotify...")
     all_playlists = []
@@ -52,3 +53,25 @@ def get_all_playlists(session: Spotify) -> list:
 
     logging.info(f'Retrieved {len(all_playlists)} playlists')
     return all_playlists
+
+
+def get_playlist_tracks(session, playlist_id):
+    """
+    Get the list of tracks in a playlist
+    The most tracks you can query at once is 100 so you must iterate and use an offset
+
+    :param session:             Spotipy session
+    :param playlist_id:         Playlist ID to get tracks
+    :return:                    List of track dictionaries
+    """
+    tracks_in_playlist = []
+    for track_offset in range(0, MAX_PLAYLIST_TRACKS, 100):
+
+        results = session.user_playlist_tracks(USERNAME, playlist_id,
+                                               limit=100, offset=track_offset)
+        if len(results['items']) < 1:
+            break
+
+        [tracks_in_playlist.append(item['track']) for item in results['items']]
+
+    return tracks_in_playlist
