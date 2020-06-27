@@ -128,3 +128,6 @@ dmypy.json
 
 .idea/
 .venv/
+
+.cache*
+.spotify_cache
