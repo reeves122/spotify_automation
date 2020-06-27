@@ -28,7 +28,11 @@ def login() -> Spotify:
             'user-library-modify ' \
             'user-read-recently-played'
 
-    session = spotipy.Spotify(auth_manager=SpotifyOAuth(scope=scope, username=USERNAME))
+    auth = SpotifyOAuth(scope=scope, username=USERNAME,
+                        cache_path=os.path.join(CACHE_DIR, 'auth_token.json'))
+    logging.info(auth.get_authorize_url())
+
+    session = spotipy.Spotify(auth_manager=auth)
     logging.info(f"Successfully logged in as: {USERNAME}")
     return session
 
