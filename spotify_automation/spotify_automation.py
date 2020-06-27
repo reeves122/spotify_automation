@@ -8,6 +8,7 @@ from spotipy import SpotifyOAuth, Spotify
 logging.getLogger().setLevel('INFO')
 USERNAME = os.environ.get('USERNAME')
 CACHE_DIR = os.environ.get('CACHE_DIR', '.spotify_cache')
+RESPONSE_URL = os.environ.get('RESPONSE_URL')
 MAX_PLAYLIST_TRACKS = 11000
 
 
@@ -30,7 +31,8 @@ def login() -> Spotify:
 
     auth = SpotifyOAuth(scope=scope, username=USERNAME,
                         cache_path=os.path.join(CACHE_DIR, 'auth_token.json'))
-    logging.info(auth.get_authorize_url())
+
+    auth.parse_auth_response_url(RESPONSE_URL)
 
     session = spotipy.Spotify(auth_manager=auth)
     logging.info(f"Successfully logged in as: {USERNAME}")
@@ -89,7 +91,7 @@ def load_tracks_file(playlist_name: str) -> list:
     :return:                    List of track dictionaries
     """
     file_name = os.path.join(CACHE_DIR, playlist_name + '.json')
-    logging.info('Loading playlists tracks from file: "{}"'.format(file_name))
+    logging.debug('Loading playlists tracks from file: "{}"'.format(file_name))
     try:
         with open(file_name, 'r') as file_handle:
             return json.loads(file_handle.read())
