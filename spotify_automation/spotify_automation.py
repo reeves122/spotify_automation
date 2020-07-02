@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import sys
 
 import spotipy
 from spotipy import SpotifyOAuth, Spotify
@@ -19,9 +20,9 @@ def login() -> Spotify:
         SPOTIPY_CLIENT_ID
         SPOTIPY_CLIENT_SECRET
         SPOTIPY_REDIRECT_URI
-    """
-    logging.info("Attempting to login...")
 
+    :return:                Spotify session
+    """
     scope = 'user-library-read ' \
             'playlist-read-private ' \
             'playlist-modify-private ' \
@@ -32,9 +33,33 @@ def login() -> Spotify:
     auth = SpotifyOAuth(scope=scope, username=USERNAME,
                         cache_path=os.path.join(CACHE_DIR, 'auth_token.json'))
 
-    auth.parse_auth_response_url(RESPONSE_URL)
+    token_info = auth.get_cached_token()
+    if token_info:
+        logging.info('Using cached token for login')
+        return _get_login_session(token_info['access_token'])
 
-    session = spotipy.Spotify(auth_manager=auth)
+    code = auth.parse_response_code(RESPONSE_URL)
+    if code:
+        logging.info('Found response URL. Getting an access token...')
+        token_info = auth.get_access_token(code)
+        return _get_login_session(token_info['access_token'])
+
+    logging.warning('Access token not found. Please use the below URL to authorize this '
+                    'application and then set the RESPONSE_URL env variable to the URL '
+                    'spotify responds with and run this application again')
+    logging.warning(auth.get_authorize_url())
+    sys.exit(0)
+
+
+def _get_login_session(access_token: str) -> Spotify:
+    """
+    Use an access token to login as a user and set up a session
+
+    :param access_token:    Access token used to login
+    :return:                Spotify session
+    """
+    logging.info("Attempting to login...")
+    session = spotipy.Spotify(access_token)
     logging.info(f"Successfully logged in as: {USERNAME}")
     return session
 
