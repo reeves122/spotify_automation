@@ -188,3 +188,18 @@ class TestSpotifyAutomation(unittest.TestCase):
         os.remove('Foo Playlist Queue.json')
         os.remove('Foo Playlist.json')
         self.assertEqual(2, session.user_playlist_remove_all_occurrences_of_tracks.call_count)
+
+    def test_find_possible_duplicate_tracks(self):
+        """
+        Test finding a duplicate track
+        """
+        playlist_tracks = [
+            {'id': '123', 'name': 'Track1', 'uri': '1', 'artists': [{'name': 'Foo Artist 1'}]},
+            {'id': '456', 'name': 'Track2', 'uri': '1', 'artists': [{'name': 'Foo Artist 2'}]},
+            {'id': '789', 'name': 'Track3', 'uri': '1', 'artists': [{'name': 'Foo Artist 3'}]},
+            {'id': '012', 'name': 'Track3', 'uri': '1', 'artists': [{'name': 'Foo Artist 3'}]},
+        ]
+        util.save_tracks_file('test_playlist', playlist_tracks)
+        result = util.find_possible_duplicate_tracks({'name': 'test_playlist'})
+        self.assertEqual(['012'], result)
+        os.remove('test_playlist.json')

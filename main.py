@@ -13,3 +13,4 @@ for playlist in playlists:
     logging.info(f"Processing playlist: {playlist['name']}")
     util.scan_playlist_for_disliked_tracks(session, playlist, disliked_tracks)
     util.process_queue_playlist(session, playlist)
+    util.find_possible_duplicate_tracks(playlist)

@@ -241,3 +241,27 @@ def process_queue_playlist(session, playlist):
 
             session.user_playlist_remove_all_occurrences_of_tracks(
                 USERNAME, playlist['id'], [track['id']])
+
+
+def find_possible_duplicate_tracks(playlist):
+    """
+    Scan the playlist for possible duplicate tracks
+
+    :param playlist:        Playlist definition which will be loaded to scan
+    """
+    deduplicated = []
+    possible_duplicates = []
+    for track in load_tracks_file(playlist['name']):
+        # Create a unique string key to deduplicate using
+        unique_key = f"{track['name']} - {track['artists'][0]['name']}"
+        unique_key = unique_key.lower()
+
+        if unique_key not in deduplicated:
+            deduplicated.append(unique_key)
+        else:
+            logging.info('WARNING: Possible duplicate track found in playlist: '
+                         'Artist:"{}" Name:"{}"'.format(track['artists'][0]['name'],
+                                                        track['name']))
+            possible_duplicates.append(track['id'])
+
+    return possible_duplicates
