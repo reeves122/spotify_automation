@@ -260,8 +260,7 @@ def find_possible_duplicate_tracks(playlist):
             deduplicated.append(unique_key)
         else:
             logging.info('WARNING: Possible duplicate track found in playlist: '
-                         'Artist:"{}" Name:"{}"'.format(track['artists'][0]['name'],
-                                                        track['name']))
+                         '{} - {}'.format(track['artists'][0]['name'], track['name']))
             possible_duplicates.append(track['id'])
 
     return possible_duplicates
