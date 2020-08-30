@@ -249,6 +249,9 @@ def find_possible_duplicate_tracks(playlist):
 
     :param playlist:        Playlist definition which will be loaded to scan
     """
+    if playlist['name'].startswith('disliked_'):
+        return
+
     deduplicated = []
     possible_duplicates = []
     for track in load_tracks_file(playlist['name']):
