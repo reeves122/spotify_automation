@@ -270,21 +270,4 @@ def find_possible_duplicate_tracks(playlist):
                             '{} - {}'.format(track['artists'][0]['name'], track['name']))
             possible_duplicates.add(track['id'])
 
-    # Try to deduplicate by looking for tracks with the same exact durations in milliseconds
-    durations = {}
-    for track in load_tracks_file(playlist['name']):
-
-        if not durations.get(track['duration_ms']):
-            durations[track['duration_ms']] = track
-            continue
-
-        else:
-            logging.warning('Possible duplicate in playlist (by duration): "{} - {}" and "{} - {}"'
-                            .format(track['artists'][0]['name'],
-                                    track['name'],
-                                    durations[track['duration_ms']]['artists'][0]['name'],
-                                    durations[track['duration_ms']]['name']))
-
-            possible_duplicates.add(track['id'])
-
     return list(possible_duplicates)
