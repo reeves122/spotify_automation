@@ -206,7 +206,6 @@ def scan_playlist_for_disliked_tracks(session: Spotify, playlist: dict,
     for track in load_tracks_file(playlist['name']):
 
         if disliked_tracks_hash.get(track['id']):
-
             logging.info('Disliked track found: Artist:"{}" Name:"{}" URI:"{}"'.format(
                 track['artists'][0]['name'], track['name'], track['uri']))
 
@@ -236,7 +235,6 @@ def process_queue_playlist(session, playlist):
     for track in load_tracks_file(playlist['name']):
 
         if destination_playlist_track_hash.get(track['id']):
-
             logging.info('Track found in destination: Artist:"{}" Name:"{}" URI:"{}"'.format(
                 track['artists'][0]['name'], track['name'], track['uri']))
 
@@ -268,21 +266,25 @@ def find_possible_duplicate_tracks(playlist):
 
         # Check if the two track durations are within 10 seconds of each other
         if isclose(deduplicated[unique_key]['duration_ms'], track['duration_ms'], abs_tol=10000):
-
-            logging.info('WARNING: Possible duplicate in playlist (by name and artist): '
-                         '{} - {}'.format(track['artists'][0]['name'], track['name']))
+            logging.warning('Possible duplicate in playlist (by name and artist): '
+                            '{} - {}'.format(track['artists'][0]['name'], track['name']))
             possible_duplicates.add(track['id'])
 
     # Try to deduplicate by looking for tracks with the same exact durations in milliseconds
-    durations = []
+    durations = {}
     for track in load_tracks_file(playlist['name']):
 
-        if track['duration_ms'] not in durations:
-            durations.append(track['duration_ms'])
+        if not durations.get(track['duration_ms']):
+            durations[track['duration_ms']] = track
+            continue
 
         else:
-            logging.info('WARNING: Possible duplicate in playlist (by duration): '
-                         '{} - {}'.format(track['artists'][0]['name'], track['name']))
+            logging.warning('Possible duplicate in playlist (by duration): "{} - {}" and "{} - {}"'
+                            .format(track['artists'][0]['name'],
+                                    track['name'],
+                                    durations[track['duration_ms']]['artists'][0]['name'],
+                                    durations[track['duration_ms']]['name']))
+
             possible_duplicates.add(track['id'])
 
     return list(possible_duplicates)
