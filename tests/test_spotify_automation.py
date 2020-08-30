@@ -189,17 +189,41 @@ class TestSpotifyAutomation(unittest.TestCase):
         os.remove('Foo Playlist.json')
         self.assertEqual(2, session.user_playlist_remove_all_occurrences_of_tracks.call_count)
 
-    def test_find_possible_duplicate_tracks(self):
+    def test_find_possible_duplicate_tracks_matching_string(self):
         """
-        Test finding a duplicate track
+        Test finding a duplicate track, with two tracks difference in duration less than 10 seconds
         """
         playlist_tracks = [
-            {'id': '123', 'name': 'Track1', 'uri': '1', 'artists': [{'name': 'Foo Artist 1'}]},
-            {'id': '456', 'name': 'Track2', 'uri': '1', 'artists': [{'name': 'Foo Artist 2'}]},
-            {'id': '789', 'name': 'Track3', 'uri': '1', 'artists': [{'name': 'Foo Artist 3'}]},
-            {'id': '012', 'name': 'Track3', 'uri': '1', 'artists': [{'name': 'Foo Artist 3'}]},
+            {'id': '1', 'name': 'Track3', 'duration_ms': 10000, 'artists': [{'name': 'Foo 3'}]},
+            {'id': '2', 'name': 'Track3', 'duration_ms': 10001, 'artists': [{'name': 'Foo 3'}]},
         ]
         util.save_tracks_file('test_playlist', playlist_tracks)
         result = util.find_possible_duplicate_tracks({'name': 'test_playlist'})
-        self.assertEqual(['012'], result)
+        self.assertEqual(['2'], result)
+        os.remove('test_playlist.json')
+
+    def test_find_possible_duplicate_tracks_different_duration(self):
+        """
+        Test finding a duplicate track, with two tracks difference in duration more than 10 seconds
+        """
+        playlist_tracks = [
+            {'id': '1', 'name': 'Track3', 'duration_ms': 10000, 'artists': [{'name': 'Foo 3'}]},
+            {'id': '2', 'name': 'Track3', 'duration_ms': 20001, 'artists': [{'name': 'Foo 3'}]},
+        ]
+        util.save_tracks_file('test_playlist', playlist_tracks)
+        result = util.find_possible_duplicate_tracks({'name': 'test_playlist'})
+        self.assertEqual([], result)
+        os.remove('test_playlist.json')
+
+    def test_find_possible_duplicate_tracks_same_duration(self):
+        """
+        Test finding a duplicate track, with two tracks difference in duration more than 10 seconds
+        """
+        playlist_tracks = [
+            {'id': '1', 'name': 'Track1', 'duration_ms': 10000, 'artists': [{'name': 'Foo 1'}]},
+            {'id': '2', 'name': 'Track2', 'duration_ms': 10000, 'artists': [{'name': 'Foo 2'}]},
+        ]
+        util.save_tracks_file('test_playlist', playlist_tracks)
+        result = util.find_possible_duplicate_tracks({'name': 'test_playlist'})
+        self.assertEqual(['2'], result)
         os.remove('test_playlist.json')

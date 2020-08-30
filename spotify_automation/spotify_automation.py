@@ -1,5 +1,6 @@
 import json
 import logging
+from math import isclose
 import os
 import sys
 
@@ -252,18 +253,36 @@ def find_possible_duplicate_tracks(playlist):
     if playlist['name'].startswith('disliked_'):
         return
 
-    deduplicated = []
-    possible_duplicates = []
+    deduplicated = {}
+    possible_duplicates = set()
+
+    # Try to deduplicate using a string of the track details
     for track in load_tracks_file(playlist['name']):
-        # Create a unique string key to deduplicate using
+
         unique_key = f"{track['name']} - {track['artists'][0]['name']}"
         unique_key = unique_key.lower()
 
-        if unique_key not in deduplicated:
-            deduplicated.append(unique_key)
-        else:
-            logging.info('WARNING: Possible duplicate track found in playlist: '
-                         '{} - {}'.format(track['artists'][0]['name'], track['name']))
-            possible_duplicates.append(track['id'])
+        if not deduplicated.get(unique_key):
+            deduplicated[unique_key] = track
+            continue
 
-    return possible_duplicates
+        # Check if the two track durations are within 10 seconds of each other
+        if isclose(deduplicated[unique_key]['duration_ms'], track['duration_ms'], abs_tol=10000):
+
+            logging.info('WARNING: Possible duplicate in playlist (by name and artist): '
+                         '{} - {}'.format(track['artists'][0]['name'], track['name']))
+            possible_duplicates.add(track['id'])
+
+    # Try to deduplicate by looking for tracks with the same exact durations in milliseconds
+    durations = []
+    for track in load_tracks_file(playlist['name']):
+
+        if track['duration_ms'] not in durations:
+            durations.append(track['duration_ms'])
+
+        else:
+            logging.info('WARNING: Possible duplicate in playlist (by duration): '
+                         '{} - {}'.format(track['artists'][0]['name'], track['name']))
+            possible_duplicates.add(track['id'])
+
+    return list(possible_duplicates)
