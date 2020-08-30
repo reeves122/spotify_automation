@@ -266,8 +266,8 @@ def find_possible_duplicate_tracks(playlist):
 
         # Check if the two track durations are within 10 seconds of each other
         if isclose(deduplicated[unique_key]['duration_ms'], track['duration_ms'], abs_tol=10000):
-            logging.warning('Possible duplicate in playlist (by name and artist): '
-                            '{} - {}'.format(track['artists'][0]['name'], track['name']))
+            logging.warning('Possible duplicate in playlist: '
+                            '{} {}'.format(track['artists'][0]['name'], track['name']))
             possible_duplicates.add(track['id'])
 
     return list(possible_duplicates)
