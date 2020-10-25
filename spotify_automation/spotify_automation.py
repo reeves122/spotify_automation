@@ -3,6 +3,7 @@ import logging
 from math import isclose
 import os
 import sys
+from typing import Union
 
 import spotipy
 from spotipy import SpotifyOAuth, Spotify
@@ -125,7 +126,7 @@ def load_tracks_file(playlist_name: str) -> list:
         return []
 
 
-def save_tracks_file(playlist_name, playlist_tracks) -> None:
+def save_tracks_file(playlist_name: str, playlist_tracks: list) -> None:
     """
     Write a list of playlist tracks to a json file
 
@@ -213,7 +214,7 @@ def scan_playlist_for_disliked_tracks(session: Spotify, playlist: dict,
                 USERNAME, playlist['id'], [track['id']])
 
 
-def process_queue_playlist(session, playlist):
+def process_queue_playlist(session: spotipy, playlist: dict) -> None:
     """
     Scan a "Queue" playlist (playlist of songs yet to be listened to and rated) for songs
     which have been added to the corresponding non-queue playlist. For example, the user may
@@ -242,11 +243,13 @@ def process_queue_playlist(session, playlist):
                 USERNAME, playlist['id'], [track['id']])
 
 
-def find_possible_duplicate_tracks(playlist):
+def find_possible_duplicate_tracks(playlist: dict,
+                                   time_ms_tolerance: int = 2000) -> Union[list, None]:
     """
     Scan the playlist for possible duplicate tracks
 
-    :param playlist:        Playlist definition which will be loaded to scan
+    :param playlist:            Playlist definition which will be loaded to scan
+    :param time_ms_tolerance:   Max track time difference when comparing tracks
     """
     if playlist['name'].startswith('disliked_'):
         return
@@ -265,7 +268,8 @@ def find_possible_duplicate_tracks(playlist):
             continue
 
         # Check if the two track durations are within 10 seconds of each other
-        if isclose(deduplicated[unique_key]['duration_ms'], track['duration_ms'], abs_tol=10000):
+        if isclose(deduplicated[unique_key]['duration_ms'], track['duration_ms'],
+                   abs_tol=time_ms_tolerance):
             logging.warning('Possible duplicate in playlist: '
                             '{} {}'.format(track['artists'][0]['name'], track['name']))
             possible_duplicates.add(track['id'])
