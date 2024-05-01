@@ -9,7 +9,7 @@ import spotipy
 from spotipy import SpotifyOAuth, Spotify
 
 logging.getLogger().setLevel('INFO')
-USERNAME = os.environ.get('USERNAME')
+USERNAME = os.environ.get('SPOTIFY_USERNAME')
 CACHE_DIR = os.environ.get('CACHE_DIR', '.spotify_cache')
 RESPONSE_URL = os.environ.get('RESPONSE_URL')
 MAX_PLAYLIST_TRACKS = 11000
@@ -168,50 +168,6 @@ def create_track_hash(track_list: list) -> dict:
     :param track_list:      List of track dictionary items
     """
     return {track['id']: track for track in track_list}
-
-
-def load_all_disliked_tracks(playlists: list) -> dict:
-    """
-    Load all the tracks from all the "disliked" playlists to create a single, large list
-
-    :param playlists        List of playlist definitions
-    """
-    logging.info('Loading disliked tracks...')
-
-    # Load all disliked tracks into a list
-    disliked_tracks = []
-    [disliked_tracks.extend(load_tracks_file(playlist['name']))
-     for playlist in playlists if playlist['name'].startswith('disliked_')]
-
-    logging.info('Loaded {} disliked tracks'.format(len(disliked_tracks)))
-
-    # Convert list to a hash map by track ID
-    return create_track_hash(disliked_tracks)
-
-
-def scan_playlist_for_disliked_tracks(session: Spotify, playlist: dict,
-                                      disliked_tracks_hash: dict) -> None:
-    """
-    Scan the specified playlist for tracks which are in the disliked list and remove them
-    from the playlist
-
-    :param session:                     Spotipy session
-    :param playlist:                    Playlist definition which will be loaded to scan
-    :param disliked_tracks_hash:        Dict hash of disliked tracks
-    """
-    if playlist['name'].startswith('disliked_'):
-        return
-
-    logging.debug('Scanning for disliked tracks in playlist "{}"'.format(playlist['name']))
-
-    for track in load_tracks_file(playlist['name']):
-
-        if disliked_tracks_hash.get(track['id']):
-            logging.info('Disliked track found: Artist:"{}" Name:"{}" URI:"{}"'.format(
-                track['artists'][0]['name'], track['name'], track['uri']))
-
-            session.user_playlist_remove_all_occurrences_of_tracks(
-                USERNAME, playlist['id'], [track['id']])
 
 
 def process_queue_playlist(session: spotipy, playlist: dict) -> None:
