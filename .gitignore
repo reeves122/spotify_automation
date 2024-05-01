@@ -161,3 +161,4 @@ cython_debug/
 .idea/
 
 .spotify_cache
+*.json
